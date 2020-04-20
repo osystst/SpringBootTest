@@ -1,5 +1,7 @@
 package kr.or.stew.config.auth;
 
+import kr.or.stew.config.auth.dto.OAuthAttributes;
+import kr.or.stew.config.auth.dto.SessionUser;
 import kr.or.stew.domain.user.User;
 import kr.or.stew.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +46,17 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         httpSession.setAttribute("user", new SessionUser(user));
 
         return new DefaultOAuth2User(
-                Collections.singleton(new SimpleGrantedAuthority(user.getRoleKey())),
-                attributes.getAttributes(),
-                attributes.getNameAttributesKey());
-        )
+                Collections.singleton(
+                        new SimpleGrantedAuthority(user.getRoleKey())),
+                        attributes.getAttributes(),
+                        attributes.getNameAttributeKey());
+    }
+
+    private User saveOrUpdate(OAuthAttributes attributes) {
+        User user = userRepository.findByEmail(attributes.getEmail())
+                .map(entity -> entity.update(attributes.getName(), attributes.getPicture()))
+                .orElse(attributes.toEntity());
+
+        return userRepository.save(user);
     }
 }
